@@ -1,12 +1,16 @@
+import tkinter
+
 import requests
 from tkinter import *
 from tkinter import font
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageSequence, ImageDraw, ImageFont
+from PIL.GifImagePlugin import getheader, getdata
 
 # Создание окна приложения
 window = Tk()
-window.title = 'Прогноз погоды by yurok'
+window.title('Прогноз погоды')
 window.geometry('800x600')
+window.iconbitmap('E:\\программирование\\weather\\weathers_gif\\icon.ico')
 info_weather = {}
 city = 'Воронеж'
 
@@ -24,7 +28,7 @@ def get_weather(city):
         'temp': round((int(now_info['main']['temp']) - 273.15), 2),
         'condition': now_info['weather'][0]['main'],
         'wind': now_info['wind']['speed'],
-        'precip': now_info['rain'] if ['rain'] in [now_info] else 0,
+        'precip': now_info['rain']['3h'] if 'rain' in now_info else 0,
         'humidity': now_info['main']['humidity'],
         'cloud': now_info['clouds']['all'],
         'feelslike': round((int(now_info['main']['feels_like']) - 273.15), 2),
@@ -36,11 +40,27 @@ def get_weather(city):
 # Настройка приложения
 def display_weather():
     global lbl_start, city
-    lbl_start = Label(window, text=f'Введите название города: ', font=('Arial', 15))
-    lbl_start.grid(column=0, row=0)
+    bg_image = Image.open('E:\\программирование\\weather\\weathers_gif\\background.gif')
+    bg_start_image = [ImageTk.PhotoImage(frame) for frame in ImageSequence.Iterator(bg_image)]
+
+    def update_gif(k):
+        frame = bg_start_image[k]
+        k = (k + 1) % len(bg_start_image)
+        label_back_start.configure(image=frame)
+        window.after(80, update_gif, k)
+
+    label_back_start = Label(window)
+    label_back_start.place(relwidth=1, relheight=1)
+    update_gif(0)
+    lbl_start = Label(window, text='Введите название города:', font=('Arial', 20, 'bold', 'italic'),
+                      bg='#99FFFF', fg='#000080')
+    lbl_start.place(relx=0.5, rely=0.23, anchor='center')
+    lbl_my = Label(window, text='Made by yurokbrat', font=('Arial', 10, 'bold', 'italic'),
+                   bg='#99FFFF', fg='#000080')
+    lbl_my.place(relx=1, rely=1, anchor='se')
+    txt = Entry(window, width=20, font=('Arial', 15, 'bold', 'italic'), bg='white', justify='center')
+    txt.place(relx=0.5, rely=0.4, anchor='center')
     global city
-    txt = Entry(window, width=10)
-    txt.grid(column=1, row=0)
 
     def clicked():
         global city
@@ -53,10 +73,11 @@ def display_weather():
                               f'Влажность --- {info_weather["humidity"]} %,\nОблачность --- {info_weather["cloud"]} %,\n'
                               f'Ощущается как --- {info_weather["feelslike"]}°C,\n'
                               f'Минимальная температура --- {info_weather["temp_min"]}°C,\n'
-                              f'Максимальная температура --- {info_weather["temp_max"]}°C.', font=('Arial', 15))
+                              f'Максимальная температура --- {info_weather["temp_max"]}°C.', font=('Arial', 5))
 
-    btn_enter_city = Button(window, text='Ввести', command=clicked)
-    btn_enter_city.grid(column=2, row=0)
+    btn_enter_city = Button(window, text='Ввести', command=clicked, font=('Arial', 12), width=10, height=2,
+                            bg='#99FFFF', fg='#003366', bd=2, relief='groove')
+    btn_enter_city.place(relx=0.5, rely=0.55, anchor='center')
 
 
 display_weather()
